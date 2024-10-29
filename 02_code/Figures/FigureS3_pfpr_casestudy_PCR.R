@@ -6,6 +6,7 @@ source("./02_code/packages_paths.R")
 
 # PfPR case study w/ PCR -------------------------------------------------------
 output <- readRDS("./03_output/PfPR_casestudy.rds") |> ungroup() |>
+  filter(pfpr %in% seq(0.1, 0.8, 0.1)) |>
   filter(diagnostic == "PCR")
 
 # tile plot
@@ -13,13 +14,15 @@ output <- readRDS("./03_output/PfPR_casestudy.rds") |> ungroup() |>
 tilep1 <- output |>
   separate(ID, c("pfpr1", "pfpr2"), "_") |>
   filter(pfpr1 == pfpr) |>
-  select(pfpr1, pfpr2, draw, case_avert_p, detect, infectious_prev)
+  filter(pfpr1 %in% seq(0.1, 0.8, 0.1) & pfpr2 %in% seq(0.1, 0.8, 0.1)) |>
+  dplyr::select(pfpr1, pfpr2, draw, case_avert_p, detect, infectious_prev)
 
 tilep2 <- output |>
   separate(ID, c("pfpr1", "pfpr2"), "_") |>
   filter(pfpr2 == pfpr) |>
+  filter(pfpr1 %in% seq(0.1, 0.8, 0.1) & pfpr2 %in% seq(0.1, 0.8, 0.1)) |>  
   rename(pfpr1 = pfpr2, pfpr2 = pfpr1) |>
-  select(pfpr1, pfpr2, draw, case_avert_p, detect, infectious_prev)
+  dplyr::select(pfpr1, pfpr2, draw, case_avert_p, detect, infectious_prev)
 
 timepall <- bind_rows(tilep1, tilep2) |> distinct() |>
   group_by(pfpr1, pfpr2) |>
@@ -43,4 +46,4 @@ p1 <- ggplot(timepall, aes(x = factor(pfpr1), y = factor(pfpr2), fill = case_ave
   theme_classic()
 
 ggsave(plot = p1, filename = "./03_output/pfpr_casestudy_per_PCR.pdf", 
-       width = 7, height = 5)
+       width = 5, height = 3)

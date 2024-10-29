@@ -107,6 +107,34 @@ output |> group_by(ID_0, NAME_1) |>
             max = max(n))
 
 
+# mixing stats
+read_matrix <- function(x, y){
+  m <- readRDS(paste0(HPCpath, "mixing_matrices_grid/mixing_matrix_", x, "_", y, ".rds"))
+  
+  # as.data.frame(sum(m[5:8, 1:4]) + sum(m[1:4, 5:8]))
+  
+  tibble(travel = c(sum(m[1,5:8]), sum(m[2,5:8]), sum(m[3,5:8]), sum(m[4,5:8]),
+                    sum(m[5,1:4]), sum(m[6,1:4]),  sum(m[7,1:4]), sum(m[8,1:4])    
+                    ))
+}
+
+# cycle through all clusters
+international_mixing <- map2_dfr(c(1:nrow(centroids_border)), 2, .f = read_matrix)
+
+summary(international_mixing * 100)
+
+# find diagonal values
+read_matrix <- function(x, y){
+  m <- readRDS(paste0(HPCpath, "mixing_matrices_grid/mixing_matrix_", x, "_", y, ".rds"))
+  as.data.frame(diag(m))
+}
+
+# cycle through all clusters
+diagonals <- map2_dfr(c(1:nrow(centroids_border)), 2, .f = read_matrix)
+
+summary(diagonals)
+
+
 # SSA cluster analysis ---------------------------------------------------------
 # read in cases averted dataset from G_processing.R
 avert <- readRDS("./03_output/avert_output.rds")
@@ -211,8 +239,8 @@ summary(output$ca_median); summary(output$sens_median); summary(output$nnt)
 # cases averted outcomes
 summary(output$ca_median);
 
-# for pairings of 5 to 15% with 50 to 80%
-a <- seq(0.05, 0.10, 0.05)
+# for pairings of 10% with 50 to 80%
+a <- 0.10
 b <- seq(0.5, 0.8, 0.05)
   
 ID_pair <- crossing(a, b) |>
@@ -226,7 +254,7 @@ output |>
             u = max(ca_median))
   
 # sensitivity measures only interpretable for RDT
-output |> filter(ID == "0.05_0.05")
+output |> filter(ID == "0.1_0.1")
 output |> filter(ID == "0.8_0.8")
 
 
@@ -237,7 +265,7 @@ output <- readRDS("./03_output/coverage_casestudy.rds") |> ungroup() |>
 tilep1 <- output |>
   separate(ID, c("pfpr1", "pfpr2"), "_") |>
   filter(pfpr1 == pfpr) |>
-  select(pfpr1, pfpr2, coverage, draw, case_avert_p, detect, infectious_prev, sens)
+  dplyr::select(pfpr1, pfpr2, coverage, draw, case_avert_p, detect, infectious_prev, sens)
 
 timepall <- tilep1 |> distinct() |> 
   group_by(pfpr1, pfpr2, coverage) |>
@@ -248,4 +276,28 @@ timepall <- tilep1 |> distinct() |>
 
 test <- timepall |> filter(case_avert_p < 1)
 table(test$coverage, test$pfpr2)
+
+
+# mixing case study ------------------------------------------------------------
+output <- readRDS("./03_output/mixing_casestudy.rds") |> ungroup() |>
+  rowwise() |>
+  mutate(case_avert = case_total_baseline - case_total,
+         case_avert_p = case_avert / case_total_baseline * 100,
+         n_inf_detect = infectious_prev * detect, 
+         nnt = 1/ n_inf_detect,
+         sens = detect / infectious_prev) |>
+  group_by(ID, pfpr, mixing_i) |>
+  # summarize over draws
+  summarize(ca_25 = quantile(case_avert_p, p = 0.25),
+            ca_median = median(case_avert_p),
+            ca_75 = quantile(case_avert_p, p = 0.75),
+            # sensitivity measures only interpretable for RDT
+            sens_25 = quantile(sens, p = 0.25),
+            sens_median = median(sens),
+            sens_75 = quantile(sens, p = 0.75),
+            nnt = median(nnt))
+
+output |> filter(ID == "0.2_0.8" & pfpr == 0.2)
+
+
 

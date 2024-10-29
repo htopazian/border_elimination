@@ -55,5 +55,5 @@ library(hipercow) # https://mrc-ide.github.io/hipercow/articles/hipercow.html
 # windows_check()
 
 # print session info
-# devtools::session_info()
-# writeLines(capture.output(devtools::session_info()), "sessionInfo.txt")
+devtools::session_info()
+writeLines(capture.output(devtools::session_info()), "sessionInfo.txt")

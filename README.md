@@ -33,6 +33,7 @@ This repo uses a [metapopulation version](https://github.com/mrc-ide/malariasimu
 |   ├── E_parameterization.R                          # Parameterize clusters 
 |   ├── F_modelling.R                                 # Run model
 |   ├── G_processing.R                                # Process model results
+|   ├── MISC_border_mixing_casestudy.R                # Border mixing case study
 |   ├── MISC_calibrate.R                              # Calibrate PfPRs to EIRs 
 |   ├── MISC_crossing_coverage_casestudy.R            # Case study: border coverage
 |   ├── MISC_microscopy_RDT_PCR.R                     # Transforming PCR to RDT prevalence
